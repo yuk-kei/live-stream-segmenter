@@ -7,8 +7,11 @@ def create_app():
     CORS(app)
     app.config.from_object('config.DevelopmentConfig')
 
-    from .routes import video_blueprint
+    from .live_routes import video_blueprint
 
     app.register_blueprint(video_blueprint)
+
+    from .jpeg_routes import jpeg_blueprint
+    app.register_blueprint(jpeg_blueprint)
 
     return app
