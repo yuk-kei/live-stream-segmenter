@@ -107,4 +107,4 @@ ENV/
 /temp_trunks
 
 *.pid
-
+*.out

@@ -126,6 +126,6 @@ def check_status():
     alive_streams = {}
     for camera_name in stream_sources:
 
-        alive_streams[camera_name] = stream_sources[camera_name].is_alive()
+        alive_streams[camera_name] = stream_sources[camera_name].is_running
 
     return jsonify(alive_streams)
