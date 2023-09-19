@@ -10,6 +10,9 @@ stream_sources = {}
 
 @jpeg_blueprint.route('/start_service', methods=['POST'])
 def start_service():
+    """
+    Start receiving streams for a given camera.
+    """
     if not request.is_json:
         return jsonify({'message': 'request is not json'}), 400
 
@@ -19,22 +22,24 @@ def start_service():
     retention = data.get('retention', 15)
     cam_type = data.get('cam_type', 'pi')
 
+    # Validate required parameters
     if 'stream_url' not in data:
         return jsonify({'message': 'stream_url not found'}), 400
-
     if not camera_name:
         return jsonify(error="Camera name not provided"), 400
 
     if camera_name not in stream_sources:
         stream_sources[camera_name] = JpegStreamSegmenter(url=stream_url, camera_name=camera_name, retention=retention,
                                                           cam_type=cam_type)
-
     stream_sources[camera_name].start()
     return jsonify(status=f"Stream for {camera_name} started")
 
 
 @jpeg_blueprint.route('/stop_service', methods=['POST'])
 def stop_service():
+    """
+    Stop the receiving streams for a given camera.
+    """
     data = request.json
     camera_name = data.get('camera_name')
 
@@ -50,6 +55,9 @@ def stop_service():
 
 @jpeg_blueprint.route('/save_past', methods=['POST'])
 def save_past():
+    """
+    Save a segment of past video and timestamps for a given camera.
+    """
     if not request.is_json:
         return jsonify({'message': 'request is not json'}), 400
 
@@ -77,6 +85,9 @@ def save_past():
 
 @jpeg_blueprint.route('/save_next', methods=['POST'])
 def save_next():
+    """
+    Schedule saving of the next period of time segment of video for a given camera.
+    """
     data = request.json
     camera_name = data.get('camera_name')
     minutes = data.get('minutes', 15)  # default to 15 minutes
@@ -93,6 +104,9 @@ def save_next():
 
 @jpeg_blueprint.route('/start_recording', methods=['POST'])
 def start_rec():
+    """
+    Begin recording the video stream for a specified camera.
+    """
     data = request.json
     camera_name = data.get('camera_name')
 
@@ -108,6 +122,9 @@ def start_rec():
 
 @jpeg_blueprint.route('/stop_recording', methods=['POST'])
 def stop_rec():
+    """
+    Stop recording the video stream for a specified camera and save the recording.
+    """
     data = request.json
     camera_name = data.get('camera_name')
 
@@ -123,6 +140,9 @@ def stop_rec():
 
 @jpeg_blueprint.route('/check', methods=['GET'])
 def check_status():
+    """
+    Check and return the status of all active camera streams.
+    """
     alive_streams = {}
     for camera_name in stream_sources:
 

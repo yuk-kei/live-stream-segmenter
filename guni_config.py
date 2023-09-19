@@ -1,4 +1,4 @@
-pidfile = 'device_manager.pid'
+pidfile = 'stream-segmenter.pid'
 worker_tmp_dir = '/dev/shm'
 worker_class = 'gthread'
 # worker_class = 'gevent'

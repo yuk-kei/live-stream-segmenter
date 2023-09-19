@@ -10,11 +10,22 @@ import os
 VIDEO_DIR = "../videos"
 
 class FrameQueue:
+    """
+    This class provides a queue system for storing frames of a video stream.
+    It allows for a fixed number of frames to be stored, removing the oldest
+    frame when the limit is reached.
+    """
     def __init__(self, save_time=15):
         self.queue_size = save_time * 60 * 30  # Assuming 30fps for 15 minutes
         self.frames = queue.Queue(maxsize=self.queue_size)
 
     def push(self, frame, timestamp):
+        """
+        Pushes a frame to the queue. If the queue is full, removes the oldest frame.
+
+        :param frame: The video frame.
+        :param timestamp: Timestamp associated with the frame.
+        """
         if self.frames.full():
             self.frames.get()
         self.frames.put((frame, timestamp))
@@ -27,7 +38,20 @@ class FrameQueue:
 
 
 class JpegStreamSegmenter:
+    """
+    This class receives a specific JPEG stream with timestamps and segments the video frames.
+    The Jpeg Stream contains a timestamp for each frame, which will be extracted and stored along with the frame.
+    It allows for saving past or future video frames as a video file and the corresponding timestamps as a text file.
+    """
     def __init__(self, url, camera_name, retention=15, cam_type="pi"):
+        """
+        Initializes the JpegStreamSegmenter with the given parameters.
+
+        :param url: Base URL of the video stream.
+        :param camera_name: Unique name for the camera.
+        :param retention: Time duration for which frames should be stored, in minutes.
+        :param cam_type: Type of camera (either "pi" or "webcam").
+        """
 
         if cam_type == "pi":
             self.url = url + "/video_feed"
@@ -48,6 +72,10 @@ class JpegStreamSegmenter:
             os.makedirs(self.camera_folder)
 
     def receive_stream(self):
+        """
+        Receives the stream, extracts frames and timestamps, and adds them to the frame queue.
+        """
+
         with requests.get(self.url, stream=True) as response:
             print(self.url)
             buffer = b''
@@ -65,9 +93,14 @@ class JpegStreamSegmenter:
                     break
 
     def save_video(self, frames, save_path, rate=30):
-        # firstframe = frames[0][0]
-        # height, width, layers = first_frame.shape
-        # size = (width, height)
+        """
+        Saves a sequence of frames as a video.
+
+        :param frames: List of frames and associated timestamps.
+        :param save_path: Path where the video should be saved.
+        :param rate: Frame rate for the output video.
+        """
+
         fourcc = cv2.VideoWriter_fourcc(*'mp4v')
         first_frame = cv2.imdecode(np.frombuffer(frames[0][0], np.uint8), cv2.IMREAD_COLOR)
         height, width, layers = first_frame.shape
@@ -76,7 +109,7 @@ class JpegStreamSegmenter:
         print(len(frames))
         with open(f"{save_path}.txt", 'w') as ts_file:
             for frame_data, timestamp in frames:
-                # print(sys.getsizeof(frame_data))
+
                 frame = cv2.imdecode(np.frombuffer(frame_data, np.uint8), cv2.IMREAD_COLOR)
                 out.write(frame)
                 ts_file.write(f"{timestamp}\n")
@@ -84,6 +117,14 @@ class JpegStreamSegmenter:
         out.release()
 
     def save_past(self, start_time, cur_time, dest_folder=None, save_path=None):
+        """
+        Saves video frames from the past.
+
+        :param start_time: Start timestamp.
+        :param cur_time: End timestamp.
+        :param dest_folder: (Optional) Destination folder for the video.
+        :param save_path: (Optional) Specific name/path for the output video.
+        """
 
         if not save_path:
             if not dest_folder:
@@ -93,7 +134,14 @@ class JpegStreamSegmenter:
         frames = self.frame_queue.get_past_n_minutes_frames(start_time, cur_time)
         self.save_video(frames, save_path)
 
-    def save_next_n_minutes(self, minutes, dest_folder=None, save_path=None, ):
+    def save_next_n_minutes(self, minutes, dest_folder=None, save_path=None):
+        """
+        Saves video frames for the next specified number of minutes.
+
+        :param minutes: Number of minutes for which frames should be saved.
+        :param dest_folder: (Optional) Destination folder for the video.
+        :param save_path: (Optional) Specific name/path for the output video.
+        """
         cur_time = int(time.time() * 1000)
         end_time = cur_time + (minutes * 60 * 1000)
         time.sleep(minutes * 60)
@@ -105,10 +153,19 @@ class JpegStreamSegmenter:
         self.save_video(frames, save_path)
 
     def start_recording(self):
+        """
+        Starts the recording process by setting the recording flag and capturing
+        the current timestamp as the starting time of recording.
+        """
         self.recording = True
         self.start_recorded_time = int(time.time() * 1000)
 
     def stop_recording(self):
+        """
+        Stops the recording process and saves the recorded frames from the start time
+        up to the current time into a video file.
+        """
+
         self.recording = False
         end_time = int(time.time() * 1000)
 
@@ -116,17 +173,20 @@ class JpegStreamSegmenter:
 
 
     def start(self):
+        """
+        Starts the process of receiving and segmenting the JPEG stream.
+        Initializes and starts a new thread dedicated to stream processing.
+        """
         self.is_running = True
         self.save_thread = Thread(target=self.receive_stream)
         self.save_thread.start()
 
     def stop(self):
+        """
+        Stops the process of receiving and segmenting the JPEG stream.
+        Also ensures that the associated thread is properly terminated.
+        """
         self.is_running = False
         if self.save_thread:
             self.save_thread.join()
 
-# if __name__ == '__main__':
-#     stream = VideoManager("http://128.195.169.221:8080", "pi_camera_6")
-#     stream.start()
-#     stream.save_next_n_minutes(1)
-#     stream.stop()

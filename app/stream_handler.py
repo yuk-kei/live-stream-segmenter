@@ -9,6 +9,11 @@ VIDEO_DIR = '../videos'
 
 
 class StreamSegmenter:
+    """
+    This class handles segmenting of video streams using ffmpeg.
+    It can start and stop the segmenting process, clean up old segments,
+    and reconstruct a video from the segments.
+    """
 
     def __init__(self, url, camera_name, segment_duration=2, segment_format="mp4"):
         self.url = url
@@ -27,6 +32,9 @@ class StreamSegmenter:
             os.makedirs(self.segments_dir)
 
     def start(self):
+        """
+        Starts segmenting the video stream.
+        """
         cmd = [
             'ffmpeg',
             '-i', self.url,
@@ -46,6 +54,9 @@ class StreamSegmenter:
         self.cleanup_thread.start()
 
     def stop(self):
+        """
+        Stops the segmenting process and any associated threads.
+        """
         self.running = False  # Signal to the cleanup thread to stop
 
         if not self.proc:
@@ -67,6 +78,10 @@ class StreamSegmenter:
             self.cleanup_thread.join()
 
     def clean_old_segments(self):
+        """
+        Periodically checks and removes segments that are older than 1 hour.
+        Runs in a separate thread.
+        """
         while self.running:
             current_time = time.time()
             for filename in os.listdir(self.segments_dir):
@@ -79,6 +94,16 @@ class StreamSegmenter:
             time.sleep(10 * 60)
 
     def reconstruct_files(self, start_time, end_time, dest_folder=None, output_file=None):
+        """
+        Reconstructs a video from segments for the given time range.
+
+        :param start_time: Start timestamp.
+        :param end_time: End timestamp.
+        :param dest_folder: (Optional) Destination folder for the output file.
+        :param output_file: (Optional) Specific name for the output file.
+
+        :return: Path to the reconstructed video.
+        """
         files_to_concatenate = []
 
         for filename in os.listdir(self.segments_dir):
@@ -133,10 +158,17 @@ class StreamSegmenter:
     # ... (rest of the class remains unchanged)
 
     def start_recording(self):
+        """
+        Flags the start recording videos in future.
+        """
         self.recording = True
         self.start_recorded_time = int(time.time())
 
     def stop_recording(self):
+        """
+        Flags the end of a recording session and triggers the reconstruction of
+        the recorded video segments.
+        """
         self.recording = False
         start_time = self.start_recorded_time
         end_time = int(time.time())
@@ -145,4 +177,7 @@ class StreamSegmenter:
         self.reconstruct_files(start_time, end_time)
 
     def __del__(self):
+        """
+        Destructor for the class. Ensures segmenting process and threads are stopped.
+        """
         self.stop()

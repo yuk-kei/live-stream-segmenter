@@ -12,7 +12,18 @@ VIDEO_DIR = '../videos'
 
 
 class StreamReceiver:
+    """
+    Warning: This class has never been used in the final implementation.
+    Might not work as expected.
+    """
     def __init__(self, url, camera_name, save_time=15):
+        """
+        Initializes the StreamReceiver with a stream URL, camera name, and optional save time.
+
+        :param url: Stream URL to fetch data from.
+        :param camera_name: Unique name for the camera for storage differentiation.
+        :param save_time: Duration for which segments are to be saved (default: 15 minutes).
+        """
 
         self.url = url
         self.save_time = save_time
@@ -29,6 +40,10 @@ class StreamReceiver:
             os.makedirs(self.frames_dir)
 
     def _run(self):
+        """
+        Internal method to continuously fetch JPEG frames from the stream and save them.
+        Designed to be run as a separate thread.
+        """
         with requests.get(self.url, stream=True) as response:
             frame_data = b''
             for chunk in response.iter_content(chunk_size=8192):
@@ -48,6 +63,9 @@ class StreamReceiver:
                     break
 
     def clean_old_segments(self):
+        """
+        Cleans old JPEG segments stored on the disk that exceed the `save_time` duration.
+        """
         while self.is_running:
             current_time = time.time()
             for filename in os.listdir(self.frames_dir):
@@ -60,6 +78,9 @@ class StreamReceiver:
             time.sleep(60)
 
     def start(self):
+        """
+        Starts the service, initializing and commencing both the save and cleanup threads.
+        """
         self.is_running = True
         self.save_thread = Thread(target=self._run)
         self.cleanup_thread = Thread(target=self.clean_old_segments)
@@ -68,6 +89,9 @@ class StreamReceiver:
         self.save_thread.start()
 
     def stop(self):
+        """
+        Stops the service and all running threads gracefully.
+        """
         self.is_running = False
         if self.save_thread:
             self.save_thread.join()
@@ -75,6 +99,15 @@ class StreamReceiver:
             self.cleanup_thread.join()
 
     def save_video_ffmpeg(self, start_time, end_time, dest_folder=None, output_file=None):
+        """
+        Save segments between start_time and end_time as a single MP4 video using FFmpeg.
+
+        :param start_time: Timestamp indicating the start of the video segment.
+        :param end_time: Timestamp indicating the end of the video segment.
+        :param dest_folder: Optional folder location for video saving (uses a default if not provided).
+        :param output_file: Optional output filename (uses a default naming scheme if not provided).
+        :return: Path to the saved video.
+        """
         files_to_concatenate = []
 
         for filename in os.listdir(self.frames_dir):
@@ -125,10 +158,16 @@ class StreamReceiver:
         return output_file
 
     def start_recording(self):
+        """
+        Start recording video segments. Marks the start time.
+        """
         self.recording = True
         self.start_recorded_time = int(time.time() * 1000)
 
     def stop_recording(self):
+        """
+        Stop recording video segments. Combines recorded segments into a single video.
+        """
         self.recording = False
         start_time = self.start_recorded_time
         end_time = int(time.time() * 1000)
@@ -137,7 +176,13 @@ class StreamReceiver:
         self.save_video_ffmpeg(start_time, end_time)
 
     def save_video_cv2(self, frames, save_path, rate=30):
+        """
+        Save given frames as a single MP4 video using OpenCV. Also saves associated timestamps to a text file.
 
+        :param frames: List of tuples containing frame data and timestamps.
+        :param save_path: Path (without extension) to save the video and timestamps.
+        :param rate: Frame rate for the output video (default: 30 fps).
+        """
         fourcc = cv2.VideoWriter_fourcc(*'mp4v')
         first_frame = cv2.imdecode(np.frombuffer(frames[0][0], np.uint8), cv2.IMREAD_COLOR)
         height, width, layers = first_frame.shape
