@@ -104,7 +104,7 @@ ENV/
 
 /videos
 /temp_trunks
-/tests
+tests/
 app/test.py
 
 *.pid
