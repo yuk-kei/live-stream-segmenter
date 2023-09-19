@@ -34,9 +34,4 @@ if __name__ == '__main__':
     test_segment = StreamSegmenter(RTSP_URL, "camera_1")
     # test_segment
     test_recording(test_segment)
-    # test_recording(test_segment)
-# Using numpy to find the timestamp in the MPEG-TS packet header
-# Note: This is a basic way of extracting the timestamp, and may need further refinement
-# arr = np.frombuffer(chunk, dtype=np.uint8)
-# pts_index = np.where(arr == 71)[0][1]  # Find the second occurrence of 0x47 (MPEG-TS sync byte)
-# timestamp = int.from_bytes(chunk[pts_index + 4:pts_index + 8], "big")
+

@@ -7,6 +7,7 @@ import numpy as np
 import time
 import os
 
+VIDEO_DIR = "../videos"
 
 class FrameQueue:
     def __init__(self, save_time=15):
@@ -42,7 +43,7 @@ class JpegStreamSegmenter:
         self.start_recorded_time = None
         print("init")
         # Create camera-specific directory to store segments
-        self.camera_folder = os.path.join('../videos', self.camera_name)
+        self.camera_folder = os.path.join(VIDEO_DIR, self.camera_name)
         if not os.path.exists(self.camera_folder):
             os.makedirs(self.camera_folder)
 

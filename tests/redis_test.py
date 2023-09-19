@@ -7,6 +7,7 @@ redis_host = "localhost"
 redis_port = 6379
 redis_password = ""
 
+
 def get_past_segments(start_time, end_time):
     r = redis.StrictRedis(host=redis_host, port=redis_port, password=redis_password, decode_responses=True)
     pipe = r.pipeline()
@@ -24,7 +25,6 @@ def get_past_segments(start_time, end_time):
         pipe.rpush("output.mp4",
                    "/tmp/output-" + time.strftime("%Y-%m-%d_%H-%M-%S", time.localtime(time.time() - i)) + ".mp4")
         pipe.execute()
-
 
 
 if __name__ == '__main__':

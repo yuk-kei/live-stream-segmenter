@@ -4,6 +4,9 @@ import time
 from datetime import datetime
 import threading
 
+TRUNKS_DIR = '../temp_trunks'
+VIDEO_DIR = '../videos'
+
 
 class StreamSegmenter:
 
@@ -19,9 +22,9 @@ class StreamSegmenter:
         self.start_recorded_time = None
 
         # Create camera-specific directory to store segments
-        self.camera_folder = os.path.join('../temp_trunks', self.camera_name)
-        if not os.path.exists(self.camera_folder):
-            os.makedirs(self.camera_folder)
+        self.segments_dir = os.path.join(TRUNKS_DIR, self.camera_name)
+        if not os.path.exists(self.segments_dir):
+            os.makedirs(self.segments_dir)
 
     def start(self):
         cmd = [
@@ -34,7 +37,7 @@ class StreamSegmenter:
             '-segment_time', str(self.segment_duration),
             '-reset_timestamps', '1',
             '-strftime', '1',
-            os.path.join(self.camera_folder, 'stream-%Y-%m-%d_%H-%M-%S.' + self.segment_format)
+            os.path.join(self.segments_dir, 'stream-%Y-%m-%d_%H-%M-%S.' + self.segment_format)
         ]
         self.proc = subprocess.Popen(cmd)
         print("start pushing")
@@ -63,12 +66,11 @@ class StreamSegmenter:
         if self.cleanup_thread and self.cleanup_thread.is_alive():
             self.cleanup_thread.join()
 
-
     def clean_old_segments(self):
         while self.running:
             current_time = time.time()
-            for filename in os.listdir(self.camera_folder):
-                file_path = os.path.join(self.camera_folder, filename)
+            for filename in os.listdir(self.segments_dir):
+                file_path = os.path.join(self.segments_dir, filename)
                 file_age = current_time - os.path.getctime(file_path)
                 if file_age > 1 * 60 * 60:  # 1 hour in seconds
                     os.remove(file_path)
@@ -79,8 +81,8 @@ class StreamSegmenter:
     def reconstruct_files(self, start_time, end_time, dest_folder=None, output_file=None):
         files_to_concatenate = []
 
-        for filename in os.listdir(self.camera_folder):
-            filepath = os.path.join(self.camera_folder, filename)
+        for filename in os.listdir(self.segments_dir):
+            filepath = os.path.join(self.segments_dir, filename)
 
             # Extract timestamp from filename format: stream-%Y-%m-%d_%H-%M-%S.ts
             file_datetime_str = filename.split('.')[0].split('stream-')[-1]
@@ -95,13 +97,12 @@ class StreamSegmenter:
         if not files_to_concatenate:
             return ValueError("No files found for the given time range")
 
-
         # Output filename format: cameraName_startTime_endTime.mp4
         if not output_file:
             start_str = datetime.fromtimestamp(start_time).strftime("%Y%m%d%H%M%S")
             end_str = datetime.fromtimestamp(end_time).strftime("%Y%m%d%H%M%S")
             if not dest_folder:
-                dest_folder = "../videos"
+                dest_folder = VIDEO_DIR
 
             if not os.path.exists(dest_folder):
                 os.makedirs(dest_folder)

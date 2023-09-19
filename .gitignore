@@ -103,8 +103,9 @@ ENV/
 .idea/
 
 /videos
-
 /temp_trunks
+/tests
+app/test.py
 
 *.pid
 *.out
