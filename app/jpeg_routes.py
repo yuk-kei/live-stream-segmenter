@@ -57,6 +57,8 @@ def stop_service():
 def save_past():
     """
     Save a segment of past video and timestamps for a given camera.
+
+    :return message corresponding message
     """
     if not request.is_json:
         return jsonify({'message': 'request is not json'}), 400

@@ -116,7 +116,7 @@ def store_past_video():
     if source_name not in stream_sources:
         return jsonify({'message': 'camera not found'}), 404
 
-    message = stream_sources[source_name].reconstruct_files(start_time=start_time, end_time=end_time)
+    message = stream_sources[source_name].save_video(start_time=start_time, end_time=end_time)
 
     return jsonify({'message': message}), 200
 

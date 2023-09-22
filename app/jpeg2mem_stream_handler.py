@@ -9,12 +9,14 @@ import os
 
 VIDEO_DIR = "../videos"
 
+
 class FrameQueue:
     """
     This class provides a queue system for storing frames of a video stream.
     It allows for a fixed number of frames to be stored, removing the oldest
     frame when the limit is reached.
     """
+
     def __init__(self, save_time=15):
         self.queue_size = save_time * 60 * 30  # Assuming 30fps for 15 minutes
         self.frames = queue.Queue(maxsize=self.queue_size)
@@ -43,6 +45,7 @@ class JpegStreamSegmenter:
     The Jpeg Stream contains a timestamp for each frame, which will be extracted and stored along with the frame.
     It allows for saving past or future video frames as a video file and the corresponding timestamps as a text file.
     """
+
     def __init__(self, url, camera_name, retention=15, cam_type="pi"):
         """
         Initializes the JpegStreamSegmenter with the given parameters.
@@ -60,10 +63,14 @@ class JpegStreamSegmenter:
 
         self.camera_name = camera_name
         self.frame_queue = FrameQueue(retention)
-        self.is_running = False
-        self.save_thread = None
 
+        # a flag to indicate whether the stream is running
+        self.is_running = False
+        # a thread to save the stream
+        self.save_thread = None
+        # a flag to indicate whether the stream is being recorded
         self.recording = None
+        # the start time of the recording
         self.start_recorded_time = None
         print("init")
         # Create camera-specific directory to store segments
@@ -71,24 +78,31 @@ class JpegStreamSegmenter:
         if not os.path.exists(self.camera_folder):
             os.makedirs(self.camera_folder)
 
-    def receive_stream(self):
+    def start_service_for(self):
         """
         Receives the stream, extracts frames and timestamps, and adds them to the frame queue.
         """
 
         with requests.get(self.url, stream=True) as response:
             print(self.url)
+            # buffer to store the stream bytes
             buffer = b''
+            # iterate over the stream
             for chunk in response.iter_content(chunk_size=8192):
+                # add the chunk to the buffer
                 buffer += chunk
                 if b'\r\n--frame\r\n' in buffer:
+                    # split the buffer into parts
                     parts = buffer.split(b'---timestamp---')
+                    # extract the timestamp and frame
                     timestamp = int(parts[1].split(b'\r\n--frame\r\n')[0].decode('utf-8'))
+                    # extract the frame
                     frame = parts[0].split(b'Content-Type: image/jpeg\r\n\r\n')[1]
+                    # add the frame to the queue
                     self.frame_queue.push(frame, timestamp)
-
+                    # reset the buffer
                     buffer = b''
-
+                # check if the stream is still running
                 if not self.is_running:
                     break
 
@@ -102,14 +116,16 @@ class JpegStreamSegmenter:
         """
 
         fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+        # Exact the first frame to get the size
         first_frame = cv2.imdecode(np.frombuffer(frames[0][0], np.uint8), cv2.IMREAD_COLOR)
         height, width, layers = first_frame.shape
         size = (width, height)
+        # Create the video writer
         out = cv2.VideoWriter(f"{save_path}.mp4", fourcc, rate, size)  # Assuming frame size of 640x480
-        print(len(frames))
+
+        # Save the timestamps
         with open(f"{save_path}.txt", 'w') as ts_file:
             for frame_data, timestamp in frames:
-
                 frame = cv2.imdecode(np.frombuffer(frame_data, np.uint8), cv2.IMREAD_COLOR)
                 out.write(frame)
                 ts_file.write(f"{timestamp}\n")
@@ -137,6 +153,7 @@ class JpegStreamSegmenter:
     def save_next_n_minutes(self, minutes, dest_folder=None, save_path=None):
         """
         Saves video frames for the next specified number of minutes.
+        Not recommend to use this function as it will block the main thread.
 
         :param minutes: Number of minutes for which frames should be saved.
         :param dest_folder: (Optional) Destination folder for the video.
@@ -144,7 +161,9 @@ class JpegStreamSegmenter:
         """
         cur_time = int(time.time() * 1000)
         end_time = cur_time + (minutes * 60 * 1000)
+        # Wait for the specified number of minutes
         time.sleep(minutes * 60)
+        # Save the frames
         if not save_path:
             if not dest_folder:
                 dest_folder = self.camera_folder
@@ -171,14 +190,13 @@ class JpegStreamSegmenter:
 
         self.save_past(self.start_recorded_time, end_time)
 
-
     def start(self):
         """
         Starts the process of receiving and segmenting the JPEG stream.
         Initializes and starts a new thread dedicated to stream processing.
         """
         self.is_running = True
-        self.save_thread = Thread(target=self.receive_stream)
+        self.save_thread = Thread(target=self.start_service_for)
         self.save_thread.start()
 
     def stop(self):
@@ -189,4 +207,3 @@ class JpegStreamSegmenter:
         self.is_running = False
         if self.save_thread:
             self.save_thread.join()
-

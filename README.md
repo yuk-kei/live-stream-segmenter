@@ -1,8 +1,8 @@
-# Stream Segmenter
+#Video streams segmenter
 
 
 
-The **Stream Segmenter Service** is a tool to manage and record video streams of varied types. It offers two segmenter modules to save the video from streams:
+The **Video streams segmenter** is a tool to manage and record video streams of varied types. It offers two segmenter modules to save the video from streams:
 
 1. **Traditional Video Stream Segmenter**:
 

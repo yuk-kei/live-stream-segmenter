@@ -16,7 +16,7 @@ def test_reconstruct(segmenter: StreamSegmenter, past_start, past_stop=0):
     # segmenter.start()
 
     current_timestamp = int(time.time())
-    output_file = segmenter.reconstruct_files(current_timestamp - past_start, current_timestamp - past_stop)
+    output_file = segmenter.save_video(current_timestamp - past_start, current_timestamp - past_stop)
     print(f"Reconstructed file saved as {output_file}")
     segmenter.stop()
 

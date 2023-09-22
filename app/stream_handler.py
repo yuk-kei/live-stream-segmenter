@@ -93,7 +93,7 @@ class StreamSegmenter:
             # Check for old files every 10 minutes
             time.sleep(10 * 60)
 
-    def reconstruct_files(self, start_time, end_time, dest_folder=None, output_file=None):
+    def save_video(self, start_time, end_time, dest_folder=None, output_file=None):
         """
         Reconstructs a video from segments for the given time range.
 
@@ -174,7 +174,7 @@ class StreamSegmenter:
         end_time = int(time.time())
         # Convert recorded segments to MP4
 
-        self.reconstruct_files(start_time, end_time)
+        self.save_video(start_time, end_time)
 
     def __del__(self):
         """
