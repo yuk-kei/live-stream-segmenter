@@ -1,8 +1,8 @@
-#Video streams segmenter
+# Stream Segmenter
 
 
 
-The **Video streams segmenter** is a tool to manage and record video streams of varied types. It offers two segmenter modules to save the video from streams:
+The **Stream Segmenter Service** is a tool to manage and record video streams of varied types. It offers two segmenter modules to save the video from streams:
 
 1. **Traditional Video Stream Segmenter**:
 
@@ -35,6 +35,14 @@ The **Video streams segmenter** is a tool to manage and record video streams of 
 
 - **Past Recoding**: Save video and timestamps from stream segments/frames from a past specified timeframe.
 - **Future Recording**: Save video and timestamps from stream segments/frames from a future specified timeframe.
+
+## workflow for **JPEG Stream with Timestamp Segmenter:**
+
+<img src="/resources/imgs/video_stream_segmenter.png" style="zoom: 80%;" />
+
+- `start_service_for()` keep saving the frames and timestamps to queue.
+- `save_past()` to save a video in the past time.
+- `start_recording()` to start recording video in future and use `stop_recording()` to stop recording and save the video.
 
 ## Getting Started
 
