@@ -30,6 +30,12 @@ The **Stream Segmenter Service** is a tool to manage and record video streams of
    - **Storage Mechanism**: This segmenter caches JPEG frames and their timestamps in an in-memory queue. 
 
    - **Video Reconstruction**: It offers the capability to concatenate a designated time range of JPEG frames from the queue into a video. Alongside, it saves the associated timestamps to a `.txt` file.
+   
+   - The example jpeg with timestamp streamer(Pi with picamera2) can be found in [here](https://github.com/yuk-kei/picam2-streaming).
+   
+     
+   
+     
 
 ## Features
 
