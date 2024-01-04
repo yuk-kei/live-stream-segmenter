@@ -1,3 +1,5 @@
+import copy
+import threading
 from threading import Thread
 import sys
 import requests
@@ -33,7 +35,7 @@ class FrameQueue:
         self.frames.put((frame, timestamp))
 
     def get_past_n_minutes_frames(self, start_time, cur_time):
-        return [f for f in list(self.frames.queue) if start_time <= f[1] <= cur_time]
+        return [copy.deepcopy(f) for f in list(self.frames.queue) if start_time <= f[1] <= cur_time]
 
     def get_next_n_minutes_frames(self, cur_time, end_time):
         return [f for f in list(self.frames.queue) if cur_time <= f[1] <= end_time]
@@ -148,7 +150,11 @@ class JpegStreamSegmenter:
             save_path = os.path.join(dest_folder, f"{self.camera_name}_{start_time}_{cur_time}")
 
         frames = self.frame_queue.get_past_n_minutes_frames(start_time, cur_time)
-        self.save_video(frames, save_path)
+        threading.Thread(
+            target=self.save_video,
+            args=(frames, save_path)
+        ).start()
+        # self.save_video(frames, save_path)
 
     def save_next_n_minutes(self, minutes, dest_folder=None, save_path=None):
         """

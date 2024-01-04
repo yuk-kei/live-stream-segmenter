@@ -1,7 +1,7 @@
 import time
 
 from flask import Blueprint, request, jsonify
-from .jpeg2mem_stream_handler import JpegStreamSegmenter
+from app.jpeg2mem_stream_handler import JpegStreamSegmenter
 
 jpeg_blueprint = Blueprint('jpeg', __name__, url_prefix="/api/v1/web_stream")
 
@@ -65,14 +65,19 @@ def save_past():
 
     data = request.json
     camera_name = data.get('camera_name')
-    start_time = data.get('start_time', 180)  # default to 180 minutes (3 min)
+    start_time = data.get('start_time', 180)  # default to 180 seconds (3 min)
     stop_time = data.get('stop_time', 0)  # default to current time
 
     dest_folder = data.get('dest_folder')  # default to None if not provided
     save_path = data.get('save_path')  # default to None if not provided
 
+    is_timestamps = data.get('is_timestamps', False)  # default to False if not provided
+
     if not camera_name:
         return jsonify(error="Camera name not provided"), 400
+    if is_timestamps:
+        stream_sources[camera_name].save_past(start_time, stop_time, dest_folder, save_path)
+        return jsonify(status=f"video from {start_time} to {stop_time} for {camera_name} is saved!")
 
     if camera_name in stream_sources:
         current_time_ms = int(time.time() * 1000)
@@ -80,7 +85,7 @@ def save_past():
         stop_time_ms = current_time_ms - (stop_time * 1000)
 
         stream_sources[camera_name].save_past(start_time_ms, stop_time_ms, dest_folder, save_path)
-        return jsonify(status=f"Past {start_time} minutes video for {camera_name} is saved!")
+        return jsonify(status=f"Past {start_time} seconds video for {camera_name} is saved!")
     else:
         return jsonify(error="Camera name not found"), 404
 

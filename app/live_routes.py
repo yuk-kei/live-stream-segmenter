@@ -1,7 +1,7 @@
 import time
 
 from flask import Blueprint, request, jsonify
-from .stream_handler import StreamSegmenter
+from app.stream_handler import StreamSegmenter
 
 video_blueprint = Blueprint('video', __name__, url_prefix="/api/v1/video_stream")
 
